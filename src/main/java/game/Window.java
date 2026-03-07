@@ -38,8 +38,8 @@ public class Window {
 
     public static void changeScene(int newS) {
         sCurrentScene = switch(newS) {
-            case 0 -> new LevelEditorScene();
-            case 1 -> new LevelScene();
+            case 0 -> new LevelEditorScene().init();
+            case 1 -> new LevelScene().init();
             default -> throw new IllegalArgumentException("Unknown scene '"+newS+"'");
         };
     }
