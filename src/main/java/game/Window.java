@@ -1,11 +1,9 @@
 package game;
 
+import game.util.Time;
 import org.lwjgl.Version;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
-
-import java.util.Objects;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -14,6 +12,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
     private static Window instance;
+    private static Scene sCurrentScene;
 
     public static Window get() {
         if(instance==null)
@@ -25,16 +24,24 @@ public class Window {
     private final int WIDTH, HEIGHT;
     private final String TITLE;
     private long glfwWindow;
-    private float r, g, b, a;
+    public float r, g, b, a;
 
     private Window() {
         WIDTH = 1920;
         HEIGHT = 1080;
         TITLE = "Game";
-        r = 0f;
-        g = 0f;
-        b = 0f;
+        r = 1f;
+        g = 1f;
+        b = 1f;
         a = 1f;
+    }
+
+    public static void changeScene(int newS) {
+        sCurrentScene = switch(newS) {
+            case 0 -> new LevelEditorScene();
+            case 1 -> new LevelScene();
+            default -> throw new IllegalArgumentException("Unknown scene '"+newS+"'");
+        };
     }
 
     @SuppressWarnings("all")
@@ -91,9 +98,15 @@ public class Window {
 
         // Critical Line
         GL.createCapabilities();
+
+        Window.changeScene(0);
     }
 
     public void loop() {
+        float beginTime = Time.getTime();
+        float endTime;
+        float dt = -1f;
+
         while(!glfwWindowShouldClose(glfwWindow)) {
             // Poll events
             glfwPollEvents();
@@ -101,15 +114,23 @@ public class Window {
             glClearColor(r, g, b, a);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
+            /*if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
                 System.out.println("Space is pressed...");
                 r = 1f;
             } else if(!KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
                 System.out.println("Space is not longer pressed...");
                 r = 0f;
+            }*/
+
+            if(dt >= 0) {
+                sCurrentScene.update(dt);
             }
 
             glfwSwapBuffers(glfwWindow);
+
+            endTime = Time.getTime();
+            dt = endTime - beginTime;
+            beginTime = endTime;
         }
     }
 }
