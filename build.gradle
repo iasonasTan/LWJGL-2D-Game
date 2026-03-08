@@ -1,9 +1,18 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass="game.Main"
+}
+
+run {
+    jvmArgs += "--enable-native-access=ALL-UNNAMED"
 }
 
 import org.gradle.internal.os.OperatingSystem
