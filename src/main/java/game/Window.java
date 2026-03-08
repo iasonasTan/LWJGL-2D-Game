@@ -2,13 +2,13 @@ package game;
 
 import game.util.Time;
 import org.lwjgl.Version;
+import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryUtil;
 
-import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
     private static Window instance;
@@ -52,7 +52,7 @@ public class Window {
         loop();
 
         // Free memory
-        glfwFreeCallbacks(glfwWindow);
+        Callbacks.glfwFreeCallbacks(glfwWindow);
         glfwDestroyWindow(glfwWindow);
 
         // Terminate GLFW
@@ -77,8 +77,8 @@ public class Window {
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
         // Create the window
-        glfwWindow = glfwCreateWindow(WIDTH, HEIGHT, TITLE, NULL, NULL);
-        if (glfwWindow == NULL) {
+        glfwWindow = glfwCreateWindow(WIDTH, HEIGHT, TITLE, MemoryUtil.NULL, MemoryUtil.NULL);
+        if (glfwWindow == MemoryUtil.NULL) {
             throw new IllegalStateException("Failed to create the GLFW window.");
         }
 

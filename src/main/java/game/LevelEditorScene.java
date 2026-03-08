@@ -14,32 +14,57 @@ public class LevelEditorScene extends Scene {
     private boolean mChangingScene = false;
     private float mTimeToChangeScene = 2.2f;
 
-    private final String VERTEX_SHADER_SRC = "#version 330 core\n" +
-            "layout (location=0) in vec3 aPos;\n" +
-            "layout (location=1) in vec4 aColor;\n" +
-            "\n" +
-            "out vec4 fColor;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "    fColor = aColor;\n" +
-            "    gl_Position = vec4(aPos, 1.0);\n" +
-            "}";
+    /*
+    private final String VERTEX_SHADER_SRC = """
+            #version 330 core
+            layout (location=0) in vec3 aPos;
+            layout (location=1) in vec4 aColor;
 
-    private final String FRAGMENT_SHADER_SRC = "#version 330 core\n" +
-            "\n" +
-            "in vec4 fColor;\n" +
-            "\n" +
-            "out vec4 color;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "    color = fColor;\n" +
-            "}\n";
+            out vec4 fColor;
+
+            void main()
+            {
+                fColor = aColor;
+                gl_Position = vec4(aPos, 1.0);
+            }""";
+
+    private final String FRAGMENT_SHADER_SRC = """
+            #version 330 core
+
+            in vec4 fColor;
+
+            out vec4 color;
+
+            void main()
+            {
+                color = fColor;
+            }
+            """;
+    */
+
+    private final String VERTEX_SHADER_SRC = """
+            #version 330 core
+            layout (location=0) in vec2 aPos;
+            
+            void main()
+            {
+                gl_Position = vec4(aPos, 0.0, 1.0);
+            }""";
+
+    private final String FRAGMENT_SHADER_SRC = """
+            #version 330 core
+            
+            out vec4 color;
+            
+            void main()
+            {
+                color = vec4(0.1, 0.2, 0.3, 1.0);
+            }
+            """;
 
     private int vertexId, fragmentId, shaderProgram;
 
-    private float[] vertexArray = {
+    /*private float[] vertexArray = {
             // position          // color
              0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f, // Bottom right
             -0.5f,  0.5f, 0.0f,   0.0f, 1.0f, 0.0f, 1.0f, // Top left
@@ -48,15 +73,15 @@ public class LevelEditorScene extends Scene {
     };
 
     private int[] elementArray = {
-            /*
+            *//*
                     x       x
 
 
                     x       x
-             */
+             *//*
             2, 1, 0, // Top right triangle
             0, 1, 3, // Bottom left triangle
-    };
+    };*/
 
     private int vaoId, vboId, eboId;
 
@@ -112,6 +137,7 @@ public class LevelEditorScene extends Scene {
             IO.println(glGetProgramInfoLog(shaderProgram, len));
         }
 
+        /*
         // Generate VAO, VBO, EBO buffer objects and send to GPU
         vaoId = glGenVertexArrays();
         glBindVertexArray(vaoId);
@@ -156,6 +182,46 @@ public class LevelEditorScene extends Scene {
                 positionsSize * floatSizeBytes
         );
         glEnableVertexAttribArray(1);
+        */
+
+        // ============================== //
+        // ========== MY SQUARE ========= //
+        // ============================== //
+        float[] vbo_raw = {
+                -0.3f, -0.3f,   // Top Left
+                 0.3f, -0.3f,   // Top Right
+                 0.3f,  0.3f,   // Bottom Right
+                -0.3f,  0.3f,   // Bottom Left
+        };
+        int[] ebo_raw = {0, 1, 2, 2, 3, 0};
+
+        FloatBuffer vboBuff = BufferUtils
+                .createFloatBuffer(vbo_raw.length)
+                .put(vbo_raw)
+                .flip();
+
+        IntBuffer eboBuff = BufferUtils
+                .createIntBuffer(ebo_raw.length)
+                .put(ebo_raw)
+                .flip();
+
+        vaoId = glGenVertexArrays();
+        glBindVertexArray(vaoId);
+
+        vboId = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, vboBuff, GL_STATIC_DRAW);
+
+        eboId = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBuff, GL_STATIC_DRAW);
+
+        int stride = 2 * Float.BYTES;
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, stride, 0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
 
         return this;
     }
@@ -182,18 +248,24 @@ public class LevelEditorScene extends Scene {
 
         // enable the vertex attribute pointer
         glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
+        //glEnableVertexAttribArray(1);
 
-        glDrawElements(
+        /*glDrawElements(
                 GL_TRIANGLES,
                 elementArray.length,
+                GL_UNSIGNED_INT,
+                0
+        );*/
+
+        glDrawElements(GL_TRIANGLES,
+                6, // Πόσα έχει μέσα το EBO
                 GL_UNSIGNED_INT,
                 0
         );
 
         // Unbind everything
         glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+        //glDisableVertexAttribArray(1);
 
         glBindVertexArray(0);
 
