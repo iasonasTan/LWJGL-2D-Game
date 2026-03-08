@@ -12,6 +12,7 @@ public abstract class Scene {
         return this;
     }
 
-    public abstract void update(float dt);
+    public void update(float dt) {
 
+    }
 }

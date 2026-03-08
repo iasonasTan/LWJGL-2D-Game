@@ -3,13 +3,6 @@ package game;
 public class LevelScene extends Scene {
     public LevelScene() {
         IO.println("Inside level scene");
-//        Window.get().r = 1;
-//        Window.get().g = 1;
-//        Window.get().b = 1;
-    }
-
-    @Override
-    public void update(float dt) {
-
+        Window.get().setBg(-1, -1, 1.0f);
     }
 }

@@ -25,7 +25,7 @@ public class KeyListener {
         return get().mKeyPressed[keyCode];
     }
 
-    private boolean mKeyPressed[] = new boolean[350];
+    private final boolean[] mKeyPressed = new boolean[350];
 
     private KeyListener() {
 

@@ -3,9 +3,12 @@ package game;
 import game.util.Time;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
+
+import java.lang.reflect.InvocationTargetException;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -24,24 +27,22 @@ public class Window {
     private final int WIDTH, HEIGHT;
     private final String TITLE;
     private long glfwWindow;
-    public float r, g, b, a;
+    private float r, g, b, a;
 
     private Window() {
         WIDTH = 1920;
         HEIGHT = 1080;
         TITLE = "Game";
-        r = 1f;
-        g = 1f;
-        b = 1f;
-        a = 1f;
+        r = g = b = a = 1f;
     }
 
-    public static void changeScene(int newS) {
-        sCurrentScene = (switch(newS) {
-            case 0 -> new LevelEditorScene();
-            case 1 -> new LevelScene();
-            default -> throw new IllegalArgumentException("Unknown scene '"+newS+"'");
-        }).init();
+    public static void changeScene(Class<? extends Scene> type) {
+        try {
+            sCurrentScene = type.getConstructor().newInstance().init();
+        } catch (InstantiationException | IllegalAccessException |
+                 InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @SuppressWarnings("all")
@@ -99,7 +100,7 @@ public class Window {
         // Critical Line
         GL.createCapabilities();
 
-        Window.changeScene(0);
+        changeScene(LevelEditorScene.class);
     }
 
     public void loop() {
@@ -114,13 +115,13 @@ public class Window {
             glClearColor(r, g, b, a);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            /*if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
+            if(KeyListener.isKeyPressed(GLFW.GLFW_KEY_ENTER)){
                 System.out.println("Space is pressed...");
                 r = 1f;
-            } else if(!KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
+            } else if(!KeyListener.isKeyPressed(GLFW.GLFW_KEY_ENTER)){
                 System.out.println("Space is not longer pressed...");
                 r = 0f;
-            }*/
+            }
 
             if(dt >= 0) {
                 sCurrentScene.update(dt);
@@ -132,5 +133,11 @@ public class Window {
             dt = endTime - beginTime;
             beginTime = endTime;
         }
+    }
+
+    public void setBg(float r, float g, float b) {
+        if(r>=0) this.r = r;
+        if(g>=0) this.g = g;
+        if(b>=0) this.b = b;
     }
 }

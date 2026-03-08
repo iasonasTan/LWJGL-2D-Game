@@ -4,6 +4,7 @@ import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.function.Supplier;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.opengl.GL20.*;
@@ -14,34 +15,8 @@ public class LevelEditorScene extends Scene {
     private boolean mChangingScene = false;
     private float mTimeToChangeScene = 2.2f;
 
-    private final String VERTEX_SHADER_SRC = """
-            #version 330 core
-            layout (location=0) in vec3 aPos;
-            layout (location=1) in vec4 aColor;
-
-            out vec4 fColor;
-
-            void main()
-            {
-                fColor = aColor;
-                gl_Position = vec4(aPos, 1.0);
-            }""";
-
-    private final String FRAGMENT_SHADER_SRC = """
-            #version 330 core
-
-            in vec4 fColor;
-
-            out vec4 color;
-
-            void main()
-            {
-                color = fColor;
-            }
-            """;
-
     private int vertexId, fragmentId, shaderProgram;
-    private int vaoId, vboId, eboId;
+    private int vaoId;
     private final int EBO_SIZE = 6;
 
     public LevelEditorScene() {
@@ -50,11 +25,22 @@ public class LevelEditorScene extends Scene {
 
     private void compileShaders() {
         // Compile and link shaders
-
         // Load and compile the vertex shader
         vertexId = glCreateShader(GL_VERTEX_SHADER);
 
         // Pass the shader source to the GPU
+        final String VERTEX_SHADER_SRC = """
+                #version 330 core
+                layout (location=0) in vec3 aPos;
+                layout (location=1) in vec4 aColor;
+                
+                out vec4 fColor;
+                
+                void main()
+                {
+                    fColor = aColor;
+                    gl_Position = vec4(aPos, 1.0);
+                }""";
         glShaderSource(vertexId, VERTEX_SHADER_SRC);
         glCompileShader(vertexId);
 
@@ -62,7 +48,9 @@ public class LevelEditorScene extends Scene {
         int ret = glGetShaderi(vertexId, GL_COMPILE_STATUS);
         if(ret == GL_FALSE) {
             int len = glGetShaderi(vertexId, GL_INFO_LOG_LENGTH);
-            IO.println("Error: default_shader.glsl\n\tVertex shader compilation failed.");
+            IO.println("""
+                    Error: default_shader.glsl
+                    \tVertex shader compilation failed.""");
             IO.println(glGetShaderInfoLog(vertexId, len));
         }
 
@@ -70,6 +58,18 @@ public class LevelEditorScene extends Scene {
         fragmentId = glCreateShader(GL_FRAGMENT_SHADER);
 
         // Pass the shader source to the GPU
+        final String FRAGMENT_SHADER_SRC = """
+                #version 330 core
+                
+                in vec4 fColor;
+                
+                out vec4 color;
+                
+                void main()
+                {
+                    color = fColor;
+                }
+                """;
         glShaderSource(fragmentId, FRAGMENT_SHADER_SRC);
         glCompileShader(fragmentId);
 
@@ -77,7 +77,9 @@ public class LevelEditorScene extends Scene {
         ret = glGetShaderi(fragmentId, GL_COMPILE_STATUS);
         if(ret == GL_FALSE) {
             int len = glGetShaderi(fragmentId, GL_INFO_LOG_LENGTH);
-            IO.println("Error: default_shader.glsl\n\tFragment shader compilation failed.");
+            IO.println("""
+                    Error: default_shader.glsl
+                    \tFragment shader compilation failed.""");
             IO.println(glGetShaderInfoLog(fragmentId, len));
         }
     }
@@ -93,7 +95,9 @@ public class LevelEditorScene extends Scene {
         int ret = glGetProgrami(shaderProgram, GL_LINK_STATUS);
         if(ret == GL_FALSE) {
             int len = glGetProgrami(shaderProgram, GL_INFO_LOG_LENGTH);
-            IO.println("Error: default_shader.glsl\n\tLinking of shaders failed.");
+            IO.println("""
+                    Error: default_shader.glsl
+                    \tLinking of shaders failed.""");
             IO.println(glGetProgramInfoLog(shaderProgram, len));
         }
     }
@@ -103,43 +107,43 @@ public class LevelEditorScene extends Scene {
         compileShaders();
         linkShaders();
 
-        // ============================== //
-        // ======= COLORED SQUARE ======= //
-        // ============================== //
         {
-            final float[] vbo_raw = {
+            // ============================== //
+            // ======= COLORED SQUARE ======= //
+            // ============================== //
+            final float[] VBO_RAW = {
                     // Position(x,y)    Color(r,g,b,a)
                     -0.3f, -0.3f, 1.0f, 0.0f, 0.0f, 1.0f, // Top Left     0
                      0.3f, -0.3f, 0.0f, 1.0f, 0.0f, 1.0f, // Top Right    1
-                     0.3f, 0.3f, 0.0f, 0.0f, 1.0f, 1.0f, // Bottom Right 2
-                    -0.3f, 0.3f, 0.0f, 0.8f, 0.8f, 1.0f, // Bottom Left  3
-                    //-0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // Center       4
+                     0.3f,  0.3f, 0.0f, 0.0f, 1.0f, 1.0f, // Bottom Right 2
+                    -0.3f,  0.3f, 0.0f, 0.8f, 0.8f, 1.0f, // Bottom Left  3
+                    -0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 1.0f, // Center       4
             };
-            final int[] ebo_raw = new int[]{
+            final int[] EBO_RAW = {
                     1, 2, 3,
                     1, 3, 0
             };
             // noinspection all
-            assert ebo_raw.length == EBO_SIZE : "OK";
+            assert EBO_RAW.length == EBO_SIZE : "OK";
 
             FloatBuffer vboBuff = BufferUtils
-                    .createFloatBuffer(vbo_raw.length)
-                    .put(vbo_raw)
+                    .createFloatBuffer(VBO_RAW.length)
+                    .put(VBO_RAW)
                     .flip();
 
             IntBuffer eboBuff = BufferUtils
-                    .createIntBuffer(ebo_raw.length)
-                    .put(ebo_raw)
+                    .createIntBuffer(EBO_RAW.length)
+                    .put(EBO_RAW)
                     .flip();
 
             vaoId = glGenVertexArrays();
             glBindVertexArray(vaoId);
 
-            vboId = glGenBuffers();
+            int vboId = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, vboId);
             glBufferData(GL_ARRAY_BUFFER, vboBuff, GL_STATIC_DRAW);
 
-            eboId = glGenBuffers();
+            int eboId = glGenBuffers();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, eboBuff, GL_STATIC_DRAW);
 
@@ -167,11 +171,13 @@ public class LevelEditorScene extends Scene {
         }
         if(mChangingScene && mTimeToChangeScene > 0) {
             mTimeToChangeScene -= dt;
-            Window.get().r -= (float) (dt*Math.random()*2);
-            Window.get().g -= (float) (dt*Math.random()*2);
-            Window.get().b -= (float) (dt*Math.random()*2);
+            Supplier<Float> rand = () -> (float)(dt*Math.random()*2);
+            Window.get().setBg(
+                    rand.get(),
+                    rand.get(),
+                    rand.get());
         } else if (mChangingScene) {
-            Window.changeScene(1);
+            Window.changeScene(LevelScene.class);
         }
 
         // bind shader program
@@ -184,17 +190,10 @@ public class LevelEditorScene extends Scene {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        /*glDrawElements(
-                GL_TRIANGLES,
-                elementArray.length,
-                GL_UNSIGNED_INT,
-                0
-        );*/
         glDrawElements(GL_TRIANGLES,
-                9, // Πόσα έχει μέσα το EBO
+                EBO_SIZE, // Πόσα έχει μέσα το EBO
                 GL_UNSIGNED_INT,
-                0
-        );
+                0);
 
         // Unbind everything
         glDisableVertexAttribArray(0);

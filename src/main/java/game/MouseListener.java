@@ -3,6 +3,7 @@ package game;
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
+@SuppressWarnings("unused")
 public class MouseListener {
     private static MouseListener instance;
 
@@ -78,8 +79,8 @@ public class MouseListener {
 
     private double mScrollX, mScrollY;
     private double mPosX, mPosY, mLastY, mLastX;
-    private boolean[] mMouseButtonPressed = new boolean[3];
     private boolean mIsDragging;
+    private final boolean[] mMouseButtonPressed = new boolean[3];
 
     private MouseListener() {
         mScrollX = mScrollY = 0f;
